@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expense Tracker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            background-color: #fff;
+            padding: 15px;
+            border-radius: 5px;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+            width: 280px;
+        }
+
+        h1 {
+            font-size: 1.5em;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .form-group {
+            margin-bottom: 10px;
+        }
+
+        label {
+            font-size: 0.9em;
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        input, select, button {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+        }
+
+        .expense-list {
+            margin-top: 15px;
+        }
+
+        .expense-item {
+            background-color: #f9f9f9;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 3px;
+        }
+
+        .btn-group {
+            text-align: right;
+        }
+
+        .btn-edit, .btn-delete {
+            padding: 5px;
+            margin-left: 5px;
+            border: none;
+            cursor: pointer;
+            border-radius: 3px;
+            font-size: 0.8em;
+        }
+
+        .btn-edit {
+            background-color: #007bff;
+            color: #fff;
+        }
+
+        .btn-delete {
+            background-color: #dc3545;
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Expense Tracker</h1>
+        <form id="addExpenseForm">
+            <div class="form-group">
+                <label for="expenseAmount">Amount (Rs.):</label>
+                <input type="number" id="expenseAmount" name="expenseAmount" step="0.01" required>
+            </div>
+            <div class="form-group">
+                <label for="expenseDescription">Description:</label>
+                <input type="text" id="expenseDescription" name="expenseDescription">
+            </div>
+            <div class="form-group">
+                <label for="expenseCategory">Category:</label>
+                <select id="expenseCategory" name="expenseCategory">
+                    <option value="Fuel">Fuel</option>
+                    <option value="Food">Food</option>
+                    <option value="Movie">Movie</option>
+                    <option value="Electricity">Electricity</option>
+                </select>
+            </div>
+            <button type="submit">Add Expense</button>
+        </form>
+
+        <div id="expenseList" class="expense-list">
+            <!-- Expense items will be dynamically added here -->
+        </div>
+    </div>
+
+    <script>
+        // Function to get expenses from local storage
+        function getExpenses() {
+            return JSON.parse(localStorage.getItem('expenses')) || [];
+        }
+
+        // Function to save expenses to local storage
+        function saveExpenses(expenses) {
+            localStorage.setItem('expenses', JSON.stringify(expenses));
+        }
+
+        // Function to render expenses in the UI
+        function renderExpenses() {
+            const expenseList = document.getElementById('expenseList');
+            expenseList.innerHTML = '';
+
+            const expenses = getExpenses();
+
+            expenses.forEach((expense, index) => {
+                const expenseItem = document.createElement('div');
+                expenseItem.classList.add('expense-item');
+                expenseItem.innerHTML = `
+                    <p><strong>${expense.description}</strong></p>
+                    <p>Amount: Rs.${expense.amount.toFixed(2)}</p>
+                    <p>Category: ${expense.category}</p>
+                    <div class="btn-group">
+                        <button class="btn-edit" onclick="editExpense(${index})">Edit</button>
+                        <button class="btn-delete" onclick="deleteExpense(${index})">Delete</button>
+                    </div>
+                `;
+                expenseList.appendChild(expenseItem);
+            });
+        }
+
+        // Function to add a new expense
+        function addExpense(event) {
+            event.preventDefault();
+
+            const expenseAmount = parseFloat(document.getElementById('expenseAmount').value);
+            const expenseDescription = document.getElementById('expenseDescription').value.trim();
+            const expenseCategory = document.getElementById('expenseCategory').value;
+
+            if (!expenseDescription || isNaN(expenseAmount)) {
+                alert('Please fill out all fields correctly.');
+                return;
+            }
+
+            const newExpense = {
+                amount: expenseAmount,
+                description: expenseDescription,
+                category: expenseCategory
+            };
+
+            const expenses = getExpenses();
+            expenses.push(newExpense);
+            saveExpenses(expenses);
+
+            renderExpenses();
+
+            // Reset the form fields
+            document.getElementById('expenseAmount').value = '';
+            document.getElementById('expenseDescription').value = '';
+            document.getElementById('expenseCategory').value = 'Fuel';
+        }
+
+        // Function to delete an expense
+        function deleteExpense(index) {
+            const expenses = getExpenses();
+            expenses.splice(index, 1);
+            saveExpenses(expenses);
+            renderExpenses();
+        }
+
+        // Function to edit an expense
+        function editExpense(index) {
+            const expenses = getExpenses();
+            const expenseToEdit = expenses[index];
+
+            const updatedAmount = prompt('Enter updated amount:', expenseToEdit.amount);
+            if (updatedAmount !== null) {
+                expenseToEdit.amount = parseFloat(updatedAmount);
+            }
+
+            const updatedDescription = prompt('Enter updated description:', expenseToEdit.description);
+            if (updatedDescription !== null) {
+                expenseToEdit.description = updatedDescription;
+            }
+
+            const updatedCategory = prompt('Enter updated category:', expenseToEdit.category);
+            if (updatedCategory !== null) {
+                expenseToEdit.category = updatedCategory;
+            }
+
+            saveExpenses(expenses);
+            renderExpenses();
+        }
+
+        // Event listener for add expense form submission
+        const addExpenseForm = document.getElementById('addExpenseForm');
+        addExpenseForm.addEventListener('submit', addExpense);
+
+        // Initial render on page load
+        renderExpenses();
+    </script>
+</body>
+</html>
